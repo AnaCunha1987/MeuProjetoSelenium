@@ -19,7 +19,7 @@ driver.get("https://www.google.com")
 campo_busca = driver.find_element(By.NAME, "q")
 
 # 5. Digitar o texto "Selenium"
-campo_busca.send_keys("Selenium")
+campo_busca.send_keys("Automação de Testes")
 
 # 6. Pressionar a tecla ENTER (para pesquisar)
 campo_busca.send_keys(Keys.ENTER)
