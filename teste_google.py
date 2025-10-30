@@ -3,33 +3,40 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
-
-# 1. Configurar o serviço do Chrome (ele baixa e usa o driver automaticamente)
-servico = Service(ChromeDriverManager().install())
-
-# 2. Abrir o navegador Chrome
-driver = webdriver.Chrome(service=servico)
-driver.maximize_window() # Opcional: maximiza a janela
-
-# 3. Acessar a URL:
-driver.get("https://www.google.com")
-
-# 4. Encontrar o campo de busca (pesquisando pelo atributo 'name="q"')
-# Explicação: Inspecione o elemento da barra de busca do Google e você verá que ele tem o atributo 'name' com valor 'q'.
-campo_busca = driver.find_element(By.NAME, "q")
-
-# 5. Digitar o texto "Selenium"
-campo_busca.send_keys("Automação de Testes")
-
-# 6. Pressionar a tecla ENTER (para pesquisar)
-campo_busca.send_keys(Keys.ENTER)
-
-# 7. (Opcional) Pausar para ver o resultado (remover em testes reais)
-# O robô faz tudo muito rápido. Vamos esperar um pouco para você ver:
+from selenium.webdriver.chrome.options import Options # NOVA IMPORTAÇÃO
 import time
-time.sleep(5)
 
-# 8. Fechar o navegador
-driver.quit()
+# --- FUNÇÃO DE TESTE RECONHECIDA PELO PYTEST ---
+def test_busca_google(): 
+    
+    # Adicionar as opções HEADLESS para o CI/CD rodar no GitHub (sem tela)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless") 
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
-print("Teste de busca do Google concluído com sucesso!")
+    # 1. Configurar o serviço do Chrome
+    # Passamos as opções de headless para o driver
+    servico = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=servico, options=chrome_options) # OPÇÕES ADICIONADAS
+    driver.maximize_window() # Opcional: maximiza a janela
+
+    # 3. Acessar a URL:
+    driver.get("https://www.google.com")
+
+    # 4. Encontrar o campo de busca
+    campo_busca = driver.find_element(By.NAME, "q")
+
+    # 5. Digitar o texto
+    campo_busca.send_keys("Automação de Testes")
+
+    # 6. Pressionar a tecla ENTER
+    campo_busca.send_keys(Keys.ENTER)
+
+    # 7. (Opcional) Pausar para ver o resultado (remover em testes reais)
+    time.sleep(5)
+
+    # 8. Fechar o navegador
+    driver.quit()
+
+    # O Pytest espera que o teste termine sem exceções. Não precisa de print de sucesso.
