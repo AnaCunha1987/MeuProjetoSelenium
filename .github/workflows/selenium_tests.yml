@@ -1,0 +1,63 @@
+name: Testes de Regressão com Selenium CI
+
+# 1. Gatilho: Quando o código é enviado para a branch 'main'
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  run_selenium_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout: Traz o código do repositório para a máquina virtual
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      # 2. Configura o ambiente Python
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # 3. Instala as dependências necessárias
+      - name: Instalar Dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium pytest webdriver-manager pytest-html
+
+      # 4. Executa os testes e gera o relatório HTML
+      - name: Executar Testes Selenium e Gerar Relatório
+        run: |
+          mkdir -p reports
+          pytest -v --html=reports/report.html --self-contained-html
+
+      # 5. Publica o relatório como artefato no GitHub
+      - name: Publicar Relatórios (Artifacts)
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: relatorio-testes-selenium
+          path: reports/report.html
+
+      # 6. Envia o relatório por e-mail via Outlook
+      - name: Enviar Relatório por E-mail (Outlook)
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.office365.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASS }}
+          subject: "Relatório de Testes Selenium"
+          to: ana.cunhati@outlook.com
+          from: ana.cunhati@outlook.com
+          body: |
+            Olá Ana,
+
+            Segue em anexo o relatório dos testes automatizados.
+
+            Att,
+            Pipeline QA
+          attachments: reports/report.html
