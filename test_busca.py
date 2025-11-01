@@ -7,16 +7,19 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# --- IMPORT CRÍTICO PARA O DEBUG ---
+from selenium.common.exceptions import TimeoutException
+
 # --- FUNÇÃO DE TESTE RECONHECIDA PELO PYTEST ---
 def test_busca_duckduckgo(): 
     
-    # 1. Configurações Headless (para rodar no GitHub Actions)
+    # 1. Configurações Headless
     chrome_options = Options()
     chrome_options.add_argument("--headless") 
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--ignore-certificate-errors")
-    chrome_options.add_argument("--window-size=1920,1080") # Garante tamanho da janela
+    chrome_options.add_argument("--window-size=1920,1080")
 
     # 2. Configurar o serviço do Chrome
     servico = Service(ChromeDriverManager().install())
@@ -24,20 +27,23 @@ def test_busca_duckduckgo():
     # 3. Abrir o navegador Chrome
     driver = webdriver.Chrome(service=servico, options=chrome_options) 
     
-    # 4. Bloco try/finally para garantir que o driver feche
     try:
-        # 5. Acessar a URL do DuckDuckGo
+        # 4. Acessar a nova URL
         driver.get("https://duckduckgo.com")
-        
-        # 6. Lidar com o pop-up de privacidade (clicar em 'Aceitar')
-        # Esperamos o botão ser clicável e clicamos nele
-        WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.ID, "va-dialog-accept"))
-        ).click()
         
         texto_busca = "Automação de Testes"
 
-        # 7. Encontrar o campo de busca (pelo ID)
+        # --- PONTO DE FALHA 1: ESPERAR PELO BOTÃO DE COOKIE ---
+        try:
+            WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, "va-dialog-accept"))
+            ).click()
+        except TimeoutException:
+            print("ERRO DE DEBUG: Timeout ao esperar pelo BOTAO DE COOKIE (By.ID, 'va-dialog-accept')")
+            driver.save_screenshot("debug_falha_botao_cookie.png")
+            raise # Força o teste a falhar aqui
+        
+        # 7. Encontrar o campo de busca
         campo_busca = driver.find_element(By.ID, "search_form_input_homepage")
 
         # 8. Digitar o texto
@@ -46,16 +52,20 @@ def test_busca_duckduckgo():
         # 9. Pressionar a tecla ENTER
         campo_busca.send_keys(Keys.ENTER)
         
-        # 10. Esperar pelo resultado na página de título
-        # O teste espera até 10s para o título conter o texto buscado
-        WebDriverWait(driver, 10).until(
-            EC.title_contains(texto_busca)
-        )
+        # --- PONTO DE FALHA 2: ESPERAR PELO TÍTULO ---
+        try:
+            WebDriverWait(driver, 10).until(
+                EC.title_contains(texto_busca)
+            )
+        except TimeoutException:
+            print(f"ERRO DE DEBUG: Timeout ao esperar pelo TÍTULO '{texto_busca}'")
+            print(f"DEBUG: Título atual é: '{driver.title}'") 
+            driver.save_screenshot("debug_falha_titulo_duck.png")
+            raise # Força o teste a falhar aqui
         
-        # 11. Asserção final (Verificação de QA)
+        # 11. Asserção final
         assert texto_busca in driver.title
 
     finally:
         # 12. Fechar o navegador (sempre)
-        # Este passo é executado mesmo se o 'assert' falhar
         driver.quit()
