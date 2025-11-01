@@ -6,12 +6,11 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
-# --- IMPORT CRÍTICO PARA O DEBUG ---
+# Importamos o TimeoutException para poder "capturá-lo"
 from selenium.common.exceptions import TimeoutException
 
 # --- FUNÇÃO DE TESTE RECONHECIDA PELO PYTEST ---
-def test_busca_duckduckgo(): 
+def test_busca_duckduckgo_passar(): 
     
     # 1. Configurações Headless
     chrome_options = Options()
@@ -28,44 +27,43 @@ def test_busca_duckduckgo():
     driver = webdriver.Chrome(service=servico, options=chrome_options) 
     
     try:
-        # 4. Acessar a nova URL
+        # 4. Acessar a URL
         driver.get("https://duckduckgo.com")
+        
+        # --- 5. CORREÇÃO: TENTAR CLICAR NO POP-UP DE PRIVACIDADE ---
+        try:
+            # Tenta por APENAS 5 segundos encontrar o botão
+            WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.ID, "va-dialog-accept"))
+            ).click()
+            print("INFO: Pop-up de privacidade encontrado e clicado.")
+        except TimeoutException:
+            # Se não encontrar em 5s, não faz nada e continua
+            print("INFO: Pop-up de privacidade não encontrado. Continuando...")
         
         texto_busca = "Automação de Testes"
 
-        # --- PONTO DE FALHA 1: ESPERAR PELO BOTÃO DE COOKIE ---
-        try:
-            WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.ID, "va-dialog-accept"))
-            ).click()
-        except TimeoutException:
-            print("ERRO DE DEBUG: Timeout ao esperar pelo BOTAO DE COOKIE (By.ID, 'va-dialog-accept')")
-            driver.save_screenshot("debug_falha_botao_cookie.png")
-            raise # Força o teste a falhar aqui
-        
-        # 7. Encontrar o campo de busca
-        campo_busca = driver.find_element(By.ID, "search_form_input_homepage")
+        # 6. Encontrar o campo de busca (agora deve funcionar)
+        # Esperamos que a barra esteja clicável
+        campo_busca = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "search_form_input_homepage"))
+        )
 
-        # 8. Digitar o texto
+        # 7. Digitar o texto
         campo_busca.send_keys(texto_busca)
 
-        # 9. Pressionar a tecla ENTER
+        # 8. Pressionar a tecla ENTER
         campo_busca.send_keys(Keys.ENTER)
         
-        # --- PONTO DE FALHA 2: ESPERAR PELO TÍTULO ---
-        try:
-            WebDriverWait(driver, 10).until(
-                EC.title_contains(texto_busca)
-            )
-        except TimeoutException:
-            print(f"ERRO DE DEBUG: Timeout ao esperar pelo TÍTULO '{texto_busca}'")
-            print(f"DEBUG: Título atual é: '{driver.title}'") 
-            driver.save_screenshot("debug_falha_titulo_duck.png")
-            raise # Força o teste a falhar aqui
+        # 9. Esperar pelo resultado na página de título
+        WebDriverWait(driver, 10).until(
+            EC.title_contains(texto_busca)
+        )
         
-        # 11. Asserção final
+        # 10. Asserção final
         assert texto_busca in driver.title
+        print("SUCESSO: Título da página verificado.")
 
     finally:
-        # 12. Fechar o navegador (sempre)
+        # 11. Fechar o navegador (sempre)
         driver.quit()
