@@ -61,3 +61,12 @@ jobs:
             Att,
             Pipeline QA
           attachments: reports/report.html
+          
+      # 7. Salvar Artefatos de Debug (Screenshots)
+      - name: Salvar Artefatos de Debug (Screenshots)
+        # Este passo roda SEMPRE, mesmo se os testes falharem
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-de-falha
+          path: "*.png" # Isso vai pegar qualquer .png na raiz do projeto
