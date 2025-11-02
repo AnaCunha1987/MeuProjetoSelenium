@@ -6,12 +6,10 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-# Importamos o TimeoutException para poder "capturá-lo"
 from selenium.common.exceptions import TimeoutException
 
 # --- FUNÇÃO DE TESTE RECONHECIDA PELO PYTEST ---
-# Renomeei para ficar claro que é a versão de debug
-def test_busca_duckduckgo_debug(): 
+def test_busca_duckduckgo_debug_v2(): # Mudei o nome só para garantir
     
     # 1. Configurações Headless
     chrome_options = Options()
@@ -31,7 +29,7 @@ def test_busca_duckduckgo_debug():
         # 4. Acessar a URL
         driver.get("https://duckduckgo.com")
         
-        # 5. TENTAR CLICAR NO POP-UP DE PRIVACIDADE (Já está correto)
+        # 5. TENTAR CLICAR NO POP-UP DE PRIVACIDADE (Correto)
         try:
             WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.ID, "va-dialog-accept"))
@@ -42,14 +40,16 @@ def test_busca_duckduckgo_debug():
         
         texto_busca = "Automação de Testes"
 
-        # --- PONTO DE FALHA 1: ESPERAR PELA BARRA DE BUSCA ---
+        # --- PONTO DE FALHA 1: CORRIGIDO ---
         try:
+            # ***** ESTA LINHA FOI ALTERADA *****
+            # Espera pela barra de busca do TOPO (header)
             campo_busca = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.ID, "search_form_input_homepage"))
+                EC.element_to_be_clickable((By.ID, "search_input"))
             )
         except TimeoutException:
-            print("ERRO DE DEBUG: Timeout ao esperar pela BARRA DE BUSCA (search_form_input_homepage)")
-            driver.save_screenshot("debug_falha_barra_busca.png")
+            print("ERRO DE DEBUG: Timeout ao esperar pela BARRA DE BUSCA (By.ID, 'search_input')")
+            driver.save_screenshot("debug_falha_barra_busca_topo.png")
             raise # Força o teste a falhar aqui
 
         # 7. Digitar o texto
@@ -58,7 +58,7 @@ def test_busca_duckduckgo_debug():
         # 8. Pressionar a tecla ENTER
         campo_busca.send_keys(Keys.ENTER)
         
-        # --- PONTO DE FALHA 2: ESPERAR PELO TÍTULO ---
+        # --- PONTO DE FALHA 2: ESPERAR PELO TÍTULO (Mantido) ---
         try:
             WebDriverWait(driver, 10).until(
                 EC.title_contains(texto_busca)
