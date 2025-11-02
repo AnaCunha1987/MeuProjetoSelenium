@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 # --- FUNÇÃO DE TESTE RECONHECIDA PELO PYTEST ---
-def test_busca_duckduckgo_debug_v3():
+def test_busca_duckduckgo_debug_v4():
     
     # 1. Configurações Headless
     chrome_options = Options()
@@ -40,16 +40,16 @@ def test_busca_duckduckgo_debug_v3():
         
         texto_busca = "Automação de Testes"
 
-        # --- PONTO DE FALHA 1: CORRIGIDO (Espera menos rígida) ---
+        # --- PONTO DE FALHA 1: CORRIGIDO (Seletor v4) ---
         try:
             # ***** ESTA LINHA FOI ALTERADA *****
-            # Espera apenas que a barra esteja VISÍVEL
+            # Espera pela barra do topo com o ID 'searchbox_input'
             campo_busca = WebDriverWait(driver, 10).until(
-                EC.visibility_of_element_located((By.ID, "search_input"))
+                EC.visibility_of_element_located((By.ID, "searchbox_input"))
             )
         except TimeoutException:
-            print("ERRO DE DEBUG: Timeout ao esperar pela VISIBILIDADE da barra (By.ID, 'search_input')")
-            driver.save_screenshot("debug_falha_barra_busca_visivel.png")
+            print("ERRO DE DEBUG: Timeout ao esperar pela VISIBILIDADE da barra (By.ID, 'searchbox_input')")
+            driver.save_screenshot("debug_falha_barra_busca_v4.png")
             raise # Força o teste a falhar aqui
 
         # 7. Digitar o texto
